@@ -39,3 +39,15 @@ Promise.all([device(), location()])
 	    console.log(error)
 	})
 ```
+
+开发的时候可以通过加载`path/to/na-bridge/na-env.js`来模拟na环境,如果用webpack可以在config中这么写
+```javascript
+module.exports = {
+    entry: {
+        app: [
+            './src/main.js',
+            'path/to/na-bridge/na-env.js'
+        ]
+    }
+}
+```
