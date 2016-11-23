@@ -14,7 +14,7 @@ while (length--) {
 function log(...arg) {
     let str = '%c' + JSON.stringify(arg, null, '%c|%c   ');
     console.log(str, ...logOutput.slice(0, str.match(/%c/g).length));
-};
+}
 
 // device mock
 window.BNJS.env = {
@@ -81,5 +81,5 @@ window.BNJS.ui.dialog = {
     show: log.bind(this, {show: 'nuomi call show'})
 };
 
-let event = new Event('window.BNJSReady');
+let event = new Event('BNJSReady');
 document.dispatchEvent(event);

@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "gulp watch",
+    "start": "gulp & gulp watch",
     "build": "gulp"
   },
   "repository": {
@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/wmfe/na-bridge#readme",
   "dependencies": {
-    "babel-plugin-transform-runtime": "^6.15.0"
+    "babel-plugin-transform-runtime": "^6.15.0",
+    "jquery-param": "^3.4.1"
   },
   "devDependencies": {
     "babel-eslint": "^7.1.0",

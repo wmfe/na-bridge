@@ -1,6 +1,7 @@
 // ready.then().catch()
 let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 import objectAssign from 'object-assign';
+import 'es6-promise/auto';
 
 let pageData = (function () {
     let search = window.location.search.replace(/^\?/, '');
@@ -29,7 +30,7 @@ let pageData = (function () {
 function ready() {
     return new Promise(function (resolve, reject) {
         setTimeout(reject, 10000, 'WMAppReady timeout');
-        if (window.window.WMApp && window.WMAppReady) {
+        if (window.WMApp && window.WMAppReady) {
             resolve(pageData);
             setTimeout(function () { }, 0);
         }
@@ -172,216 +173,15 @@ let account = {
     getInfo: () => ready().then(function () {
         return new Promise((resolve, reject) => {
             window.WMApp.account.getUserInfo(function (data) {
-                if (data.status) {
-                    // 已经登录 status是1
-                    resolve();
-                }
-                else {
-                    // 没有登录 status是0
-                    reject();
-                }
+                let r = data.result || {};
                 setTimeout(function () { }, 0);
+                if (!data.status) {
+                    return reject(r.errorInfo);
+                }
+                resolve(r.userInfo);
             });
         });
     })
-};
-
-// let titleBarConfig = {}
-
-let page = {
-    close() {
-        return ready().then(window.WMApp.page.closePage);
-    },
-    // 打开url或者协议
-    open(url, onBack) {
-        if (url.indexOf('bdwm://') !== 0) {
-            // header=1 是白色头部，注意兼容
-            let header = 1;
-            url = 'bdwm://native?pageName=webview&url=' + encodeURIComponent(url) + '&header=' + header;
-        }
-        window.location.href = url;
-        // ready().then(function () {
-        //     window.WMApp.page.changePageForResult({ openUrl: url }, function (data) {
-        //         ui.toast('back');
-        //         onBack && onBack(data)
-        //     });
-        // })
-    },
-    home() {
-        console.info('navigate to home');
-        window.location.href = 'bdwm://native?pageName=home';
-    },
-    onBack(onBackHandler) {
-        return ready().then(function () {
-            window.WMApp.entry.setPageAction('onBack', onBackHandler);
-            setTimeout(function () { }, 0);
-        });
-    },
-    shop({shopId, itemId, addToCart = 0, isStore = 1}) {
-        return ready().then(function () {
-            if (!shopId) {
-                setTimeout(function () { }, 0);
-                return Promise.reject('shopId不能为空');
-            }
-            let params;
-            if (isStore) {
-                params = {
-                    pageName: 'superMarket',
-                    pageParams: {
-                        shopId: shopId
-                    }
-                };
-                itemId && (params.pageParams.itemId = itemId);
-                itemId && addToCart && (params.pageParams.addToCart = 1);
-            }
-            else {
-                params = {
-                    pageName: 'shopMenu',
-                    pageParams: {
-                        shopId: shopId
-                    }
-                };
-                itemId && (params.pageParams.dishId = itemId);
-            }
-            window.WMApp.page.changePage(params);
-            setTimeout(function () { }, 0);
-        });
-    },
-    shopDetail(shopId) {
-        ready().then(function () {
-            window.WMApp.page.changePage({
-                pageName: 'shopDetail',
-                pageParams: {
-                    shopId: shopId
-                }
-            });
-            setTimeout(function () { }, 0);
-        });
-    },
-    shopComment(shopId) {
-        window.WMApp.page.changePage({
-            pageName: 'shopComment',
-            pageParams: {
-                shopId: shopId
-            }
-        });
-        setTimeout(function () { }, 0);
-    },
-    setTitleBar(barConfig) {
-        /**
-         * barConfig demo
-         * {
-         *     title: '超市购',
-         *     onTitleClick: ()=>0, //点击标题的回调，没有回调传false
-         *     actionList: [{
-                    title: '搜索',
-                    titleColor: '#ffffff',
-                    icon: 'http://img.waimai.baidu.com/pb/09e4d72a1253d0934f568cb6cad5074acb',
-                    id: 'search',
-                    onClick: ()=>0 //点击 action 的回调，没有回调传false
-                }]
-         * }
-         * @param  titleText
-         * @return {[type]}   [description]
-         */
-        return ready().then(function () {
-            let titleBarParam = {
-                titleText: barConfig.title === undefined ? document.title : barConfig.title,
-                titleClickAble: barConfig.onTitleClick ? 1 : 0
-            };
-            let actionCallbacks = {};
-            let last;
-            if (barConfig.actionList && barConfig.actionList.length) {
-                // 兼容老版本
-                last = barConfig.actionList.length - 1;
-                titleBarParam.actionText = barConfig.actionList[last].title;
-                titleBarParam.actionClickAble = barConfig.actionList[last].onClick ? 1 : 0;
-                // 新版本
-                titleBarParam.actionList = barConfig.actionList.map(v => {
-                    if (v.onClick) {
-                        actionCallbacks[v.id] = v.onClick;
-                    }
-                    return {
-                        title: v.title,
-                        titleColor: v.titleColor,
-                        icon: v.icon,
-                        id: v.id
-                    };
-                });
-            }
-            window.WMApp.page.setTitleBar(titleBarParam);
-            if (barConfig.onTitleClick) {
-                window.WMApp.entry.setPageAction('onTitleClick', barConfig.onTitleClick);
-            }
-
-            window.WMApp.entry.setPageAction('onActionClick', function (data) {
-                if (data && data.result) {
-                    if (Object.prototype.toString.call(data.result.id) === '[object String]') {
-                        actionCallbacks[data.result.id] && actionCallbacks[data.result.id]();
-                    }
-                }
-                else if (barConfig.actionList && barConfig.actionList[last] && barConfig.actionList[last].onClick) {
-                    // 兼容老版本
-                    barConfig.actionList[last].onClick();
-                }
-            });
-            setTimeout(function () { }, 0);
-        });
-    },
-    confirmOrder(shopId, products) {
-        return ready().then(function () {
-            return account.getInfo()
-                .catch(() => {
-                    // 没有登录
-                    return account.login()
-                        .catch(() => {
-                            return Promise.reject('登录失败');
-                        });
-                })
-                .then(() => {
-                    // 已经登录
-                    window.WMApp.page.changePage({
-                        pageName: 'confirmOrder',
-                        pageParams: {
-                            shopId: shopId,
-                            products: encodeURIComponent(products)
-                        }
-                    });
-                    setTimeout(function () { }, 0);
-                });
-        });
-    },
-    pushRefresh(callback) {
-        // ios 有bug
-        return;
-        // if (!callback) {
-        //     ui.toast('no callback')
-        //     return;
-        // }
-        // // callback 返回一
-        // // 个 promise
-        // ready().then(function () {
-        //     window.WMApp.page.openPageRefresh();
-        //     ui.toast('openPageRefresh bind');
-        //     window.WMApp.entry.setPageAction('onPageRefresh', function () {
-        //         ui.toast('onPageRefresh');
-        //         callback()
-        //             .then(function () {
-        //                 window.WMApp.page.hidePageRefresh();
-        //             })
-        //             .catch(function () {
-        //                 window.WMApp.page.hidePageRefresh();
-        //             })
-        //     });
-        // })
-    },
-    closePushRefresh() {
-        return;
-        // ready().then(function () {
-        //     window.WMApp.page.closePageRefresh();
-        //     // ui.toast('closed')
-        // })
-    }
 };
 
 let ui = {
@@ -589,6 +389,214 @@ const webview = {
                 }
             });
         }
+    }
+};
+
+// let titleBarConfig = {}
+let page = {
+    close() {
+        return ready().then(window.WMApp.page.closePage);
+    },
+    // 打开url或者协议
+    open(url, onBack) {
+        if (url.indexOf('bdwm://') !== 0) {
+            // header=1 是白色头部，注意兼容
+            let header = 1;
+            url = 'bdwm://native?pageName=webview&url=' + encodeURIComponent(url) + '&header=' + header;
+        }
+        window.location.href = url;
+        // ready().then(function () {
+        //     window.WMApp.page.changePageForResult({ openUrl: url }, function (data) {
+        //         ui.toast('back');
+        //         onBack && onBack(data)
+        //     });
+        // })
+    },
+    onBack(onBackHandler) {
+        return ready().then(function () {
+            window.WMApp.entry.setPageAction('onBack', onBackHandler);
+            setTimeout(function () { }, 0);
+        });
+    },
+    home() {
+        console.info('navigate to home');
+        window.location.href = 'bdwm://native?pageName=home';
+    },
+    search() {
+        webview.open('bdwm://native?pageName=search&id=10');
+    },
+    index() {
+        webview.open('bdwm://plugin?pluginId=bdwm.plugin.supermarket&pageName=index&scrollViewBounces=0');
+    },
+    cart() {
+        webview.open('bdwm://plugin?pluginId=bdwm.plugin.supermarket&pageName=cart&scrollViewBounces=0');
+    },
+    shop({shopId, itemId = '', addToCart = 0, isStore = 1}) {
+        return ready().then(function () {
+            if (!shopId) {
+                setTimeout(function () { }, 0);
+                return Promise.reject('shopId不能为空');
+            }
+            if (isStore) {
+                webview.open('bdwm://plugin?pluginId=bdwm.plugin.supermarket&pageName=shop&scrollViewBounces=0', {
+                    shopId,
+                    itemId,
+                    addToCart,
+                    isStore
+                });
+            }
+            else {
+                let params = {
+                    pageName: 'shopMenu',
+                    pageParams: {
+                        shopId: shopId
+                    }
+                };
+                itemId && (params.pageParams.dishId = itemId);
+                window.WMApp.page.changePage(params);
+            }
+            setTimeout(function () { }, 0);
+        });
+    },
+    shopSearch(shopId) {
+        webview.open('bdwm://plugin?pluginId=bdwm.plugin.supermarket&pageName=search&scrollViewBounces=0', {
+            shopId
+        });
+    },
+    item(shopId, itemId, addToCart = 0) {
+        webview.open('bdwm://plugin?pluginId=bdwm.plugin.supermarket&pageName=item&scrollViewBounces=0', {
+            shopId,
+            itemId,
+            addToCart
+        });
+    },
+    shopDetail(shopId) {
+        ready().then(function () {
+            window.WMApp.page.changePage({
+                pageName: 'shopDetail',
+                pageParams: {
+                    shopId: shopId
+                }
+            });
+            setTimeout(function () { }, 0);
+        });
+    },
+    shopComment(shopId) {
+        window.WMApp.page.changePage({
+            pageName: 'shopComment',
+            pageParams: {
+                shopId: shopId
+            }
+        });
+        setTimeout(function () { }, 0);
+    },
+    setTitleBar(barConfig) {
+        /**
+         * barConfig demo
+         * {
+         *     title: '超市购',
+         *     onTitleClick: ()=>0, //点击标题的回调，没有回调传false
+         *     actionList: [{
+                    title: '搜索',
+                    titleColor: '#ffffff',
+                    icon: 'http://img.waimai.baidu.com/pb/09e4d72a1253d0934f568cb6cad5074acb',
+                    id: 'search',
+                    onClick: ()=>0 //点击 action 的回调，没有回调传false
+                }]
+         * }
+         * @param  titleText
+         * @return {[type]}   [description]
+         */
+        return ready().then(function () {
+            let titleBarParam = {
+                titleText: barConfig.title === undefined ? document.title : barConfig.title,
+                titleClickAble: barConfig.onTitleClick ? 1 : 0
+            };
+            let actionCallbacks = {};
+            let last;
+            if (barConfig.actionList && barConfig.actionList.length) {
+                // 兼容老版本
+                last = barConfig.actionList.length - 1;
+                titleBarParam.actionText = barConfig.actionList[last].title;
+                titleBarParam.actionClickAble = barConfig.actionList[last].onClick ? 1 : 0;
+                // 新版本
+                titleBarParam.actionList = barConfig.actionList.map(v => {
+                    if (v.onClick) {
+                        actionCallbacks[v.id] = v.onClick;
+                    }
+                    return {
+                        title: v.title,
+                        titleColor: v.titleColor,
+                        icon: v.icon,
+                        id: v.id
+                    };
+                });
+            }
+            window.WMApp.page.setTitleBar(titleBarParam);
+            if (barConfig.onTitleClick) {
+                window.WMApp.entry.setPageAction('onTitleClick', barConfig.onTitleClick);
+            }
+
+            window.WMApp.entry.setPageAction('onActionClick', function (data) {
+                if (data && data.result) {
+                    if (Object.prototype.toString.call(data.result.id) === '[object String]') {
+                        actionCallbacks[data.result.id] && actionCallbacks[data.result.id]();
+                    }
+                }
+                else if (barConfig.actionList && barConfig.actionList[last] && barConfig.actionList[last].onClick) {
+                    // 兼容老版本
+                    barConfig.actionList[last].onClick();
+                }
+            });
+            setTimeout(function () { }, 0);
+        });
+    },
+    confirmOrder(shopId, products) {
+        return ready()
+            .then(account.getInfo)
+            .catch(account.login)
+            .then(() => {
+                // 已经登录
+                window.WMApp.page.changePage({
+                    pageName: 'confirmOrder',
+                    pageParams: {
+                        shopId: shopId,
+                        products: encodeURIComponent(products)
+                    }
+                });
+                setTimeout(function () { }, 0);
+            });
+    },
+    pushRefresh(callback) {
+        // ios 有bug
+        return;
+        // if (!callback) {
+        //     ui.toast('no callback')
+        //     return;
+        // }
+        // // callback 返回一
+        // // 个 promise
+        // ready().then(function () {
+        //     window.WMApp.page.openPageRefresh();
+        //     ui.toast('openPageRefresh bind');
+        //     window.WMApp.entry.setPageAction('onPageRefresh', function () {
+        //         ui.toast('onPageRefresh');
+        //         callback()
+        //             .then(function () {
+        //                 window.WMApp.page.hidePageRefresh();
+        //             })
+        //             .catch(function () {
+        //                 window.WMApp.page.hidePageRefresh();
+        //             })
+        //     });
+        // })
+    },
+    closePushRefresh() {
+        return;
+        // ready().then(function () {
+        //     window.WMApp.page.closePageRefresh();
+        //     // ui.toast('closed')
+        // })
     }
 };
 

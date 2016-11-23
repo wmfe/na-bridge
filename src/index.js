@@ -12,6 +12,7 @@ import * as bainuo from './bainuo';
 
 let env;
 let envName;
+let appPlat = 'waimai';
 if (isBdwm) {
     env = bdwm;
     envName = 'bdwm';
@@ -19,6 +20,7 @@ if (isBdwm) {
 else if (isBainuo) {
     env = bainuo;
     envName = 'bainuo';
+    appPlat = 'nuomi';
 }
 else {
     env = bdwm;
@@ -27,4 +29,4 @@ else {
 
 let {ready, device, location, http, page, ui, network, share, shop, account, webview} = env;
 
-export {ready, device, location, http, page, ui, network, share, shop, account, webview, envName};
+export {ready, device, location, http, page, ui, network, share, shop, account, webview, envName, appPlat};
