@@ -32,7 +32,7 @@ if (process.env.BUILD_FOR === 'offline' && isBdwm) {
   envName = 'bainuo'
     // 应该区分nuomi shoubai qianbao ditu，但是暂不区分，https://agroup.baidu.com/waimaic/md/article/72141?side=folder
   appPlat = 'nuomi'
-} else if (process.env.BUILD_FOR !== 'h5') {
+} else if (process.env.BUILD_FOR === 'h5') {
   env = h5
   envName = 'h5'
 } else if (
