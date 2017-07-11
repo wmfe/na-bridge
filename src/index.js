@@ -1,5 +1,6 @@
 import * as bdwm from './bdwm'
 import * as bainuo from './bainuo'
+import * as h5 from './h5'
 
 function is (ua) {
   return new RegExp(ua, 'i').test(navigator.userAgent)
@@ -31,6 +32,9 @@ if (process.env.BUILD_FOR === 'offline' && isBdwm) {
   envName = 'bainuo'
     // 应该区分nuomi shoubai qianbao ditu，但是暂不区分，https://agroup.baidu.com/waimaic/md/article/72141?side=folder
   appPlat = 'nuomi'
+} else if (process.env.BUILD_FOR !== 'h5') {
+  env = h5
+  envName = 'h5'
 } else if (
     process.env.NODE_ENV === 'testing' || process.env.NODE_ENV === 'development'
 ) {
