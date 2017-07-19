@@ -154,6 +154,9 @@ window.WMApp.device = {
       payPlats: '0,1,2,3,4,6',
       refer: 'waimai.homepg'
     }
+  },
+  getAppVersion: function () {
+    return '4.8.1'
   }
 }
 
