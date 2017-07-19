@@ -86,8 +86,17 @@ function location () {
   })
 }
 
+const underlineToCamelCase = (params = {}) => {
+  return Object.keys(params).reduce((res, curV) => {
+    const key = curV.replace(/_([a-z])/g, (m, w) => w.toUpperCase())
+    res[key] = params[curV]
+    return res
+  }, {})
+}
+
 function sendOnlineStat (params) {
   return ready().then(function () {
+    params = underlineToCamelCase(params)
     // trace埋点需要增加daRefer 传空字符串就行 by liupai
     if (params.daRefer === undefined) {
       params.daRefer = ''
