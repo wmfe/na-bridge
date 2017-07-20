@@ -790,13 +790,12 @@ function send (stat) {
   image.src = 'http://log.waimai.baidu.com/static/transparent.gif?' + query
 }
 
-function humpToUnderline (params) {
-  let result = {}
-  Object.keys(params).forEach(k => {
-    let newK = k.replace(/([A-Z])/g, '_$1').toLowerCase()
-    result[newK] = params[k]
-  })
-  return result
+function humpToUnderline (params = {}) {
+  return Object.keys(params).reduce((res, curV) => {
+    const key = curV.replace(/([A-Z])/g, '_$1').toLowerCase()
+    res[key] = params[curV]
+    return res
+  }, {})
 }
 
 function sendOnlineStat (params) {
