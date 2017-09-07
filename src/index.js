@@ -1,6 +1,13 @@
 import * as bdwm from './bdwm'
 import * as bainuo from './bainuo'
 import * as h5 from './h5'
+import validateOverride from './bridgeInterface'
+
+if (process.env.NODE_ENV !== 'production') {
+  validateOverride(bdwm)
+  validateOverride(bainuo)
+  validateOverride(h5)
+}
 
 function is (ua) {
   return new RegExp(ua, 'i').test(navigator.userAgent)
