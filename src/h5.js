@@ -1,8 +1,10 @@
 // ready.then().catch()
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-const isWeChat = /micromessenger/i.test(window.navigator.userAgent)
 import objectAssign from 'object-assign'
 import 'es6-promise/auto'
+import ajax from './ajax'
+
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+const isWeChat = /micromessenger/i.test(window.navigator.userAgent)
 
 let pageData = (function () {
   let search = window.location.search.replace(/^\?/, '')
@@ -29,7 +31,7 @@ let pageData = (function () {
   return params
 })()
 
-function ready() {
+function ready () {
   return new Promise(function (resolve, reject) {
     // setTimeout(reject, 10000, 'WMAppReady timeout')
     resolve(pageData)
@@ -48,7 +50,7 @@ if (!cuid) {
     '; expires=Thu, 01 Jan 2970 00:00:00 GMT'
 }
 
-function device() {
+function device () {
   const width = window.innerWidth
   const height = window.innerHeight
   return ready().then(function () {
@@ -68,7 +70,7 @@ function device() {
   })
 }
 
-function location() {
+function location () {
   return ready().then(function () {
     setTimeout(function () {}, 0)
     return {}
@@ -83,7 +85,7 @@ function humpToUnderline (params = {}) {
   }, {})
 }
 
-function sendOnlineStat(params) {
+function sendOnlineStat (params) {
   params = humpToUnderline(params)
   Promise.all([ready(), device(), location(), network()]).then(([
                                                                   pageData,
@@ -123,8 +125,8 @@ const DEFAULT = {
 }
 
 function send (stat) {
-  let query = serialize(objectAssign({ da_time: Date.now() }, DEFAULT, stat))
-  console.log(objectAssign({ da_time: Date.now() }, DEFAULT, stat), query)
+  let query = serialize(objectAssign({da_time: Date.now()}, DEFAULT, stat))
+  console.log(objectAssign({da_time: Date.now()}, DEFAULT, stat), query)
   let image = new Image()
   image.onload = (image.onerror = function () {
     image = null
@@ -150,10 +152,10 @@ function serialize (object) {
   return output.join('&')
 }
 
-function removeOrderTraceItem() {
+function removeOrderTraceItem () {
 }
 
-function network() {
+function network () {
   return {
     net_type: 'wifi'
   }
@@ -192,6 +194,32 @@ const online = 'https://waimai.baidu.com'
 // let online = 'http://cp01-fuguozheng.epc.baidu.com:8086';
 
 const boundary = '-WaimaiAjaxBoundary-'
+const getRequest = (params, callback) => {
+  let url = params.url.slice(params.url.indexOf('/', 8))
+  ajax().get(url, params.data).then(res => {
+    let params = {
+      status: 1,
+      result: {
+        statusCode: 200,
+        responseBody: JSON.stringify(res)
+      }
+    }
+    callback(params)
+  })
+}
+const postRawRequest = (params, callback) => {
+  let url = params.url.slice(params.url.indexOf('/', 8))
+  ajax().post(url, params.data).then(res => {
+    let params = {
+      status: 1,
+      result: {
+        statusCode: 200,
+        responseBody: JSON.stringify(res)
+      }
+    }
+    callback(params)
+  })
+}
 const http = {
   get: (url, data) =>
     ready().then(function () {
@@ -207,7 +235,7 @@ const http = {
         data: data
       }
       return new Promise(function (resolve, reject) {
-        window.WMApp.network.getRequest(params, function (data) {
+        getRequest(params, function (data) {
           if (data.status && data.result && parseInt(data.result.statusCode, 10) === 200) {
             let r = data.result.responseBody
             if (r.indexOf(boundary) === 0) {
@@ -225,7 +253,7 @@ const http = {
             setTimeout(function () {
             }, 0)
           } else {
-            let info = '数据传输失败，请重试'
+            const info = '数据传输失败，请重试'
             // console.info(info);
             reject(info)
           }
@@ -246,7 +274,7 @@ const http = {
         data: query.join('&')
       }
       return new Promise(function (resolve, reject) {
-        window.WMApp.network.postRawRequest(params, function (data) {
+        postRawRequest(params, function (data) {
           if (data.status && data.result && parseInt(data.result.statusCode, 10) === 200) {
             let r = data.result.responseBody
             if (r.indexOf(boundary) === 0) {
@@ -264,7 +292,7 @@ const http = {
             setTimeout(function () {
             }, 0)
           } else {
-            let info = '数据传输失败，请重试'
+            const info = '数据传输失败，请重试'
             // console.info(info);
             reject(info)
           }
@@ -322,7 +350,7 @@ const ui = {
   }
 }
 
-function share(params) {}
+function share (params) {}
 
 const shop = {
   addFavorite (shopId, f) {
@@ -331,7 +359,7 @@ const shop = {
   }
 }
 
-let pageShowCallback = []
+// let pageShowCallback = []
 const webview = {
   startLoading: ui.startLoading,
   endLoading: ui.endLoading,
@@ -368,7 +396,7 @@ const webview = {
     }
   },
   close (data) {
-    return ready().then(window.WMApp.page.closePage)
+    // return ready().then(window.WMApp.page.closePage)
   },
   pageshow (callback) {
   }
@@ -418,17 +446,17 @@ const page = {
   shopComment (shopId) {
   },
   setTitleBar (barConfig) {
-    document.title = barConfig.titleText || barConfig.title || '百度外卖';
+    document.title = barConfig.titleText || barConfig.title || '百度外卖'
     if (isWeChat && isIOS) {
-      const i = document.createElement('iframe');
-      i.src = '//m.baidu.com/favicon.ico';
-      i.style.display = 'none';
+      const i = document.createElement('iframe')
+      i.src = '//m.baidu.com/favicon.ico'
+      i.style.display = 'none'
       i.onload = function () {
         setTimeout(function () {
-          i.remove();
+          i.remove()
         }, 9)
       }
-      document.body.appendChild(i);
+      document.body.appendChild(i)
     }
   },
   confirmOrder (shopId, products) {
